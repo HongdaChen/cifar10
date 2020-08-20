@@ -1,0 +1,36 @@
+version: "2.3"
+services:
+  rank0:
+    image: pytorch-distributed-cifar10
+    ports:
+      - "6006:6006"
+    networks:
+      bridge:
+        ipv4_address: 10.2.0.10
+    volumes:
+      - ./summary:/work/summary
+      - ./main.py:/work/main.py
+      - ./plot.sh:/work/plot.sh
+    command: python -u main.py --init-method tcp://10.2.0.10:23456 --world-size 3 --rank 0 -a resnet --depth 20 --epochs 164 --wd 1e-4 --optimizer adam  --beta1 0.9 --beta2 0.999 
+  rank1:
+    image: pytorch-distributed-cifar10
+    networks:
+      bridge:
+        ipv4_address: 10.2.0.11
+    volumes:
+      - ./main.py:/work/main.py
+    command: python -u main.py --init-method tcp://10.2.0.10:23456 --world-size 3 --rank 1 -a resnet --depth 20 --epochs 164 --wd 1e-4 --optimizer adam  --beta1 0.9 --beta2 0.999 
+  rank2:
+    image: pytorch-distributed-cifar10
+    networks:
+      bridge:
+        ipv4_address: 10.2.0.12
+    volumes:
+      - ./main.py:/work/main.py
+    command: python -u main.py --init-method tcp://10.2.0.10:23456 --world-size 3 --rank 2 -a resnet --depth 20 --epochs 164 --wd 1e-4 --optimizer adam  --beta1 0.9 --beta2 0.999 
+networks:
+  bridge:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.2.0.0/16
